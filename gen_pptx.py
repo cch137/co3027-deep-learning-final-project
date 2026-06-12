@@ -544,6 +544,43 @@ textbox(s, Inches(0.95), Inches(6.45), Inches(11.7), Inches(0.5),
         [("Code: data/ · synth/ · models/ · train.py · eval.py · eval_ood.py · figures.py · serve.py + web UI",
           {"size": 11, "color": RGBColor.from_string("9FB0CC")})])
 
+# ============================================================ 17. Q&A appendix
+s = new_slide()
+kicker_title(s, "Appendix", "Anticipated Questions")
+QA = [
+    ("If the classical scan is more accurate, why learn at all?",
+     "Linear, stationary relationships are its optimal regime. The learned estimator adds a full "
+     "posterior over lags (uncertainty), and extends to nonlinear families by changing only the "
+     "generator — no new statistic has to be derived."),
+    ("Is “no annotation” accurate when training is supervised?",
+     "Yes. All supervision comes from the generative process itself; no human labels and no "
+     "real-market labels are used at any stage. This is standard synthetic supervision "
+     "(sim-to-real transfer)."),
+    ("How is look-ahead bias avoided?",
+     "Splits are applied to the window END date; normalization is per-window only; the test seed "
+     "and the 2026 evaluation periods were never used for training or model selection."),
+    ("The proposal mentioned attention — why a CNN?",
+     "For a pairwise, fixed-length task a compact CNN is sufficient and easier to validate. "
+     "Attention (the full CMAN architecture) is the planned extension for the multi-asset setting."),
+    ("Why classify the lag instead of regressing it?",
+     "The posterior can be multimodal — periodic signals alias across lags — and regression would "
+     "average distinct peaks into a meaningless value. The softmax also provides uncertainty."),
+    ("Can this be used for trading?",
+     "Not directly. The model estimates relationship structure; turning a known lag into a "
+     "profitable strategy involves transaction costs and market-efficiency questions outside "
+     "this project's scope."),
+]
+qx, qy = Inches(0.62), Inches(1.5)
+qw, qh = Inches(3.95), Inches(2.75)
+for i, (q, a) in enumerate(QA):
+    col, row = i % 3, i // 3
+    x = qx + col * Inches(4.15)
+    y = qy + row * Inches(2.95)
+    card(s, x, y, qw, qh)
+    textbox(s, x + Inches(0.22), y + Inches(0.18), qw - Inches(0.44), qh - Inches(0.36),
+            [("Q: " + q, {"size": 11.5, "bold": True, "color": NAVY, "space_after": 6}),
+             (a, {"size": 10.5, "color": INK})])
+
 # ============================================================ speaker notes (zh-Hant)
 NOTES = [
     # 1
@@ -588,7 +625,7 @@ NOTES = [
     "生成器的構造公式如投影片所示。基底序列有三種：白噪音、隨機係數的 AR(1)、和多個頻率的正弦疊加，"
     "用意是避免模型只學到單一類型的形狀。τ 在正負十之間均勻抽樣；β 的絕對值在 0.3 到 3 之間、正負各半；"
     "σ 控制 correlation 的強弱。另外保留 15% 完全獨立的序列對，讓模型學會判斷不相關的情況，這些樣本的 "
-    "lag 沒有定義，對應的損失會被遮罩。訓練之前先做了一個一致性檢查：用古典方法還原生成器的標籤，"
+    "lag 沒有定義，對應的損失會被遮罩。訓練之前先做了一個一致性檢查：用傳統方法還原生成器的標籤，"
     "lag 的精確率是 94%，表示標籤和評估的約定是一致的。",
     # 8
     "模型是 siamese（孿生）架構的 1D CNN，參數量約十三萬。兩條序列經過同一組權重的 encoder，"
@@ -604,13 +641,13 @@ NOTES = [
     "推論只需要一次 forward pass，不需要逐 lag 掃描。",
     # 10
     "結果的第一部分是合成 test set，兩萬筆，沒有用於訓練或選模。模型的數字是 71.6%、82.7%、ρ 誤差 "
-    "0.165；古典方法是 94.3%、95.1%、0.042。在這個 benchmark 上古典方法比較好，這點如實報告。"
+    "0.165；傳統方法是 94.3%、95.1%、0.042。在這個 benchmark 上傳統方法比較好，這點如實報告。"
     "這個結果在預期之內：cross-correlation 對線性、平穩的關係本來就接近最優，而生成器產生的正是"
     "這種關係。在訊號較強的子集，也就是 |ρ| 大於 0.5 的約七成樣本上，模型可以到 91.9%。"
     "差距的來源在下一頁分析。",
     # 11
     "左邊是 lag 的 confusion matrix，分佈集中在對角線，表示模型即使錯，大多也只差一步。右邊把樣本按 "
-    "correlation 強度分組：強訊號區模型 92%、古典 99.8%；中等訊號區是 49% 對 87%；|ρ| 低於 0.2 的"
+    "correlation 強度分組：強訊號區模型 92%、baseline 是 99.8%；中等訊號區是 49% 對 87%；|ρ| 低於 0.2 的"
     "弱訊號區兩者都低，17% 和 23%。這說明在 128 個樣本點之下，弱相關的 lag 對任何估計方法都接近"
     "不可辨識，是任務本身的限制。模型與 baseline 的差距，集中在中等與弱訊號這兩區。",
     # 12
@@ -627,8 +664,8 @@ NOTES = [
     "而不是預期的零。查證之後，這是資料源裡外匯和指數的日線收盤時間戳不同步造成的，"
     "模型反映的是資料中實際存在的偏移。",
     # 14
-    "這一頁回答一個需要回答的問題：古典方法在線性情況下更準，為什麼還要用學習的方法。左欄是事實："
-    "在我們的 benchmark 上古典方法較好，速度也相當。中欄是模型目前的價值：它輸出整個 lag 的機率分佈，"
+    "這一頁回答一個需要回答的問題：傳統方法在線性情況下更準，為什麼還要用學習的方法。左欄是事實："
+    "在我們的 benchmark 上傳統方法較好，速度也相當。中欄是模型目前的價值：它輸出整個 lag 的機率分佈，"
     "可以表達不確定，這是點估計做不到的；另外 synthetic supervision 到真實市場的遷移已經得到驗證。"
     "右欄是用學習方法的主要理由：波動率傳染、門檻效應這類非線性關係，Pearson correlation 在數學上"
     "測不到；傳統做法是為每種假設設計新的統計量，而這個框架只需要在生成器裡加入對應的樣本。"
@@ -645,6 +682,11 @@ NOTES = [
     "足夠：約十三萬參數，一次 forward pass 取代逐 lag 掃描，並且附帶不確定性分佈。第三，這個框架的"
     "延伸性：cross-correlation 在線性情況下仍然較強，但對它測不到的非線性關係，這套已驗證的流程可以"
     "直接套用。我的報告到這裡，謝謝大家。",
+    # 17
+    "這一頁是備用的問答整理，不一定會放出來，視提問情況使用。最可能被問的是第一題：傳統方法更準，"
+    "為什麼還要用學習的方法。回答的重點是：線性情況本來就是傳統方法的最優範圍；模型的價值在於"
+    "輸出不確定性，以及只要改生成器就能延伸到傳統統計量測不到的非線性關係。第二常見的是標註的問題："
+    "訓練確實是監督式的，但所有監督訊號來自生成過程，沒有人工標註。其餘問題依卡片內容回答即可。",
 ]
 assert len(NOTES) == slide_no, f"{len(NOTES)} notes vs {slide_no} slides"
 for slide, note in zip(prs.slides, NOTES):
