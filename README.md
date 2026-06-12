@@ -42,7 +42,7 @@ Siamese 1D-CNN encoder -> fusion -> three heads:
 |---|---|---|
 | lag  | 21-class softmax, tau in [-10, +10] | who leads, by how many days |
 | rho  | tanh in [-1, 1] | correlation strength and sign (near 0 = unrelated) |
-| beta | scalar regression (optional) | scale factor of the relationship |
+| beta | derived analytically at readout: `beta = rho * std(B) / std(A)` | scale factor of the relationship (no learned head needed — with z-scored inputs the OLS slope equals rho) |
 
 ## Evaluation
 

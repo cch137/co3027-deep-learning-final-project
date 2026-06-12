@@ -1,0 +1,104 @@
+==============================================================================
+LeadLagNet training  |  params: 130,502  |  device: CPU (10 threads)
+steps: 8000  batch: 128  lr: 0.002  seed: 0
+val set: 4096 synthetic pairs (seed 123)  |  checkpoint: outputs/model.pt
+random-guess reference: lag_acc ~0.048
+==============================================================================
+step   100/8000  train_loss 3.8879  lr 2.00e-03  24.8 it/s  ETA  5.3 min
+step   200/8000  train_loss 2.9692  lr 2.00e-03  21.7 it/s  ETA  6.0 min
+step   300/8000  train_loss 2.8289  lr 1.99e-03  20.7 it/s  ETA  6.2 min
+step   400/8000  train_loss 2.7188  lr 1.99e-03  20.5 it/s  ETA  6.2 min
+step   500/8000  train_loss 2.5690  lr 1.98e-03  18.8 it/s  ETA  6.6 min
+[VAL] step   500  loss 2.4799  lag_acc 0.326  lag_acc±1 0.633  rho_mae 0.2315  *best -> checkpoint*
+step   600/8000  train_loss 2.4299  lr 1.97e-03  17.6 it/s  ETA  7.0 min
+step   700/8000  train_loss 2.3768  lr 1.96e-03  17.5 it/s  ETA  7.0 min
+step   800/8000  train_loss 2.3004  lr 1.95e-03  17.6 it/s  ETA  6.8 min
+step   900/8000  train_loss 2.2535  lr 1.94e-03  17.6 it/s  ETA  6.7 min
+step  1000/8000  train_loss 2.1923  lr 1.92e-03  16.6 it/s  ETA  7.0 min
+[VAL] step  1000  loss 2.3074  lag_acc 0.407  lag_acc±1 0.685  rho_mae 0.2310  *best -> checkpoint*
+step  1100/8000  train_loss 2.1551  lr 1.91e-03  15.6 it/s  ETA  7.4 min
+step  1200/8000  train_loss 2.0866  lr 1.89e-03  15.8 it/s  ETA  7.2 min
+step  1300/8000  train_loss 2.0652  lr 1.87e-03  16.0 it/s  ETA  7.0 min
+step  1400/8000  train_loss 2.0029  lr 1.85e-03  16.2 it/s  ETA  6.8 min
+step  1500/8000  train_loss 1.9924  lr 1.83e-03  16.4 it/s  ETA  6.6 min
+[VAL] step  1500  loss 1.9085  lag_acc 0.512  lag_acc±1 0.732  rho_mae 0.2015  *best -> checkpoint*
+step  1600/8000  train_loss 1.8827  lr 1.81e-03  16.3 it/s  ETA  6.5 min
+step  1700/8000  train_loss 1.9071  lr 1.79e-03  16.5 it/s  ETA  6.4 min
+step  1800/8000  train_loss 1.8506  lr 1.76e-03  16.6 it/s  ETA  6.2 min
+step  1900/8000  train_loss 1.8176  lr 1.73e-03  16.7 it/s  ETA  6.1 min
+step  2000/8000  train_loss 1.8385  lr 1.71e-03  16.8 it/s  ETA  5.9 min
+[VAL] step  2000  loss 1.8063  lag_acc 0.549  lag_acc±1 0.758  rho_mae 0.1922  *best -> checkpoint*
+step  2100/8000  train_loss 1.8029  lr 1.68e-03  16.7 it/s  ETA  5.9 min
+step  2200/8000  train_loss 1.7849  lr 1.65e-03  16.5 it/s  ETA  5.8 min
+step  2300/8000  train_loss 1.7430  lr 1.62e-03  16.5 it/s  ETA  5.8 min
+step  2400/8000  train_loss 1.7496  lr 1.59e-03  16.5 it/s  ETA  5.6 min
+step  2500/8000  train_loss 1.6743  lr 1.56e-03  16.6 it/s  ETA  5.5 min
+[VAL] step  2500  loss 1.6657  lag_acc 0.589  lag_acc±1 0.775  rho_mae 0.1836  *best -> checkpoint*
+step  2600/8000  train_loss 1.6681  lr 1.52e-03  16.5 it/s  ETA  5.5 min
+step  2700/8000  train_loss 1.6431  lr 1.49e-03  16.6 it/s  ETA  5.3 min
+step  2800/8000  train_loss 1.6199  lr 1.45e-03  16.6 it/s  ETA  5.2 min
+step  2900/8000  train_loss 1.5889  lr 1.42e-03  16.7 it/s  ETA  5.1 min
+step  3000/8000  train_loss 1.5885  lr 1.38e-03  16.6 it/s  ETA  5.0 min
+[VAL] step  3000  loss 1.5700  lag_acc 0.617  lag_acc±1 0.781  rho_mae 0.1819  *best -> checkpoint*
+step  3100/8000  train_loss 1.6035  lr 1.35e-03  16.6 it/s  ETA  4.9 min
+step  3200/8000  train_loss 1.5487  lr 1.31e-03  16.5 it/s  ETA  4.8 min
+step  3300/8000  train_loss 1.5699  lr 1.27e-03  16.2 it/s  ETA  4.8 min
+step  3400/8000  train_loss 1.5333  lr 1.23e-03  16.2 it/s  ETA  4.7 min
+step  3500/8000  train_loss 1.4916  lr 1.20e-03  16.3 it/s  ETA  4.6 min
+[VAL] step  3500  loss 1.5000  lag_acc 0.641  lag_acc±1 0.797  rho_mae 0.1769  *best -> checkpoint*
+step  3600/8000  train_loss 1.5082  lr 1.16e-03  16.3 it/s  ETA  4.5 min
+step  3700/8000  train_loss 1.4975  lr 1.12e-03  16.4 it/s  ETA  4.4 min
+step  3800/8000  train_loss 1.4635  lr 1.08e-03  16.4 it/s  ETA  4.3 min
+step  3900/8000  train_loss 1.4661  lr 1.04e-03  15.9 it/s  ETA  4.3 min
+step  4000/8000  train_loss 1.4875  lr 1.00e-03  15.5 it/s  ETA  4.3 min
+[VAL] step  4000  loss 1.4122  lag_acc 0.654  lag_acc±1 0.797  rho_mae 0.1717  *best -> checkpoint*
+step  4100/8000  train_loss 1.4451  lr 9.61e-04  15.0 it/s  ETA  4.3 min
+step  4200/8000  train_loss 1.4174  lr 9.22e-04  14.7 it/s  ETA  4.3 min
+step  4300/8000  train_loss 1.4015  lr 8.82e-04  14.3 it/s  ETA  4.3 min
+step  4400/8000  train_loss 1.3851  lr 8.44e-04  14.0 it/s  ETA  4.3 min
+step  4500/8000  train_loss 1.3756  lr 8.05e-04  13.7 it/s  ETA  4.2 min
+[VAL] step  4500  loss 1.3637  lag_acc 0.673  lag_acc±1 0.806  rho_mae 0.1689  *best -> checkpoint*
+step  4600/8000  train_loss 1.3921  lr 7.67e-04  13.4 it/s  ETA  4.2 min
+step  4700/8000  train_loss 1.3484  lr 7.29e-04  13.2 it/s  ETA  4.2 min
+step  4800/8000  train_loss 1.3278  lr 6.91e-04  12.9 it/s  ETA  4.1 min
+step  4900/8000  train_loss 1.3744  lr 6.54e-04  12.6 it/s  ETA  4.1 min
+step  5000/8000  train_loss 1.3507  lr 6.17e-04  12.3 it/s  ETA  4.1 min
+[VAL] step  5000  loss 1.3087  lag_acc 0.692  lag_acc±1 0.810  rho_mae 0.1645  *best -> checkpoint*
+step  5100/8000  train_loss 1.3456  lr 5.81e-04  12.1 it/s  ETA  4.0 min
+step  5200/8000  train_loss 1.3459  lr 5.46e-04  11.9 it/s  ETA  3.9 min
+step  5300/8000  train_loss 1.3376  lr 5.11e-04  11.7 it/s  ETA  3.8 min
+step  5400/8000  train_loss 1.3158  lr 4.78e-04  11.5 it/s  ETA  3.8 min
+step  5500/8000  train_loss 1.2991  lr 4.44e-04  11.4 it/s  ETA  3.7 min
+[VAL] step  5500  loss 1.2819  lag_acc 0.705  lag_acc±1 0.818  rho_mae 0.1650  *best -> checkpoint*
+step  5600/8000  train_loss 1.2802  lr 4.12e-04  11.2 it/s  ETA  3.6 min
+step  5700/8000  train_loss 1.3206  lr 3.81e-04  11.0 it/s  ETA  3.5 min
+step  5800/8000  train_loss 1.2799  lr 3.51e-04  10.9 it/s  ETA  3.4 min
+step  5900/8000  train_loss 1.2619  lr 3.21e-04  10.8 it/s  ETA  3.2 min
+step  6000/8000  train_loss 1.2571  lr 2.93e-04  10.7 it/s  ETA  3.1 min
+[VAL] step  6000  loss 1.2593  lag_acc 0.713  lag_acc±1 0.821  rho_mae 0.1655  *best -> checkpoint*
+step  6100/8000  train_loss 1.2211  lr 2.66e-04  10.6 it/s  ETA  3.0 min
+step  6200/8000  train_loss 1.2356  lr 2.40e-04  10.5 it/s  ETA  2.8 min
+step  6300/8000  train_loss 1.2537  lr 2.15e-04  10.5 it/s  ETA  2.7 min
+step  6400/8000  train_loss 1.2314  lr 1.91e-04  10.4 it/s  ETA  2.6 min
+step  6500/8000  train_loss 1.2539  lr 1.69e-04  10.3 it/s  ETA  2.4 min
+[VAL] step  6500  loss 1.2087  lag_acc 0.721  lag_acc±1 0.826  rho_mae 0.1613  *best -> checkpoint*
+step  6600/8000  train_loss 1.2406  lr 1.47e-04  10.3 it/s  ETA  2.3 min
+step  6700/8000  train_loss 1.2176  lr 1.28e-04  10.2 it/s  ETA  2.1 min
+step  6800/8000  train_loss 1.2270  lr 1.09e-04  10.1 it/s  ETA  2.0 min
+step  6900/8000  train_loss 1.1822  lr 9.19e-05  10.1 it/s  ETA  1.8 min
+step  7000/8000  train_loss 1.2076  lr 7.61e-05  10.0 it/s  ETA  1.7 min
+[VAL] step  7000  loss 1.1884  lag_acc 0.728  lag_acc±1 0.830  rho_mae 0.1584  *best -> checkpoint*
+step  7100/8000  train_loss 1.2068  lr 6.18e-05  9.9 it/s  ETA  1.5 min
+step  7200/8000  train_loss 1.1933  lr 4.89e-05  9.9 it/s  ETA  1.3 min
+step  7300/8000  train_loss 1.2376  lr 3.75e-05  9.8 it/s  ETA  1.2 min
+step  7400/8000  train_loss 1.2010  lr 2.76e-05  9.8 it/s  ETA  1.0 min
+step  7500/8000  train_loss 1.1871  lr 1.92e-05  9.7 it/s  ETA  0.9 min
+[VAL] step  7500  loss 1.1876  lag_acc 0.725  lag_acc±1 0.829  rho_mae 0.1589
+step  7600/8000  train_loss 1.2174  lr 1.23e-05  9.7 it/s  ETA  0.7 min
+step  7700/8000  train_loss 1.1737  lr 6.93e-06  9.6 it/s  ETA  0.5 min
+step  7800/8000  train_loss 1.2284  lr 3.08e-06  9.6 it/s  ETA  0.3 min
+step  7900/8000  train_loss 1.2002  lr 7.71e-07  9.5 it/s  ETA  0.2 min
+step  8000/8000  train_loss 1.1865  lr 0.00e+00  9.5 it/s  ETA  0.0 min
+[VAL] step  8000  loss 1.1845  lag_acc 0.725  lag_acc±1 0.829  rho_mae 0.1585
+
+best val score 0.6716; saved outputs/model.pt  (total 844s)

@@ -1,0 +1,8 @@
+numpy
+pandas
+pyarrow
+matplotlib
+yfinance
+torch
+fastapi
+uvicorn

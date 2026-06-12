@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>LeadLagNet — Model Validation (Synthetic Quiz)</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>
+  :root { --blue: #2563eb; --green: #059669; --gray: #6b7280; --bg: #f8fafc; --line: #e5e7eb; }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body { font-family: "Segoe UI", "Microsoft JhengHei", sans-serif; margin: 0;
+         background: var(--bg); color: #111827; font-size: 14px; }
+  .wrap { max-width: 1280px; margin: 0 auto; height: 100vh; padding: 10px 16px;
+          display: flex; flex-direction: column; gap: 10px; }
+  .head { display: flex; align-items: flex-start; gap: 10px; }
+  .head > div { flex: 1; }
+  h1 { font-size: 1.12rem; margin: 0; display: flex; align-items: center; gap: 8px; }
+  h1 svg { color: var(--green); }
+  h1 a { font-size: 0.8rem; color: var(--blue); text-decoration: none; font-weight: 400;
+         display: inline-flex; align-items: center; gap: 3px; margin-left: 12px; }
+  .sub { color: var(--gray); font-size: 0.8rem; line-height: 1.5; }
+  .card { background: #fff; border: 1px solid var(--line); border-radius: 10px;
+          padding: 10px 14px; }
+  .controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: end; }
+  label { display: block; font-size: 0.72rem; color: var(--gray); margin-bottom: 3px; }
+  select { padding: 6px 9px; border: 1px solid #d1d5db; border-radius: 7px;
+           font-size: 0.86rem; background: #fff; }
+  button { padding: 7px 18px; border: 0; border-radius: 7px; background: var(--green);
+           color: #fff; font-size: 0.86rem; cursor: pointer; display: inline-flex;
+           align-items: center; gap: 6px; }
+  button:hover { opacity: 0.9; }
+  .langbtn { background: #fff; color: var(--gray); border: 1px solid #d1d5db;
+             padding: 5px 12px; font-size: 0.8rem; }
+  #score { font-size: 0.86rem; font-weight: 600; align-self: center; margin-left: 6px; }
+  #results { display: flex; flex-direction: column; gap: 10px; flex: 1; min-height: 0; }
+  .row1 { display: grid; grid-template-columns: 1.25fr 1fr; gap: 10px; }
+  .row2 { display: grid; grid-template-columns: 1.25fr 1fr; gap: 10px; flex: 1; min-height: 0; }
+  .chartcard { display: flex; flex-direction: column; min-height: 0; }
+  .cv { flex: 1; position: relative; min-height: 0; }
+  #verdict { font-size: 0.92rem; line-height: 1.7; }
+  .muted { color: var(--gray); font-size: 0.76rem; margin-bottom: 4px; }
+  table { border-collapse: collapse; font-size: 0.85rem; width: 100%; }
+  td, th { border: 1px solid var(--line); padding: 4px 8px; text-align: center; }
+  .hidden { display: none !important; }
+  .ok { color: var(--green); } .bad { color: #dc2626; }
+  svg.lucide { width: 1.05em; height: 1.05em; vertical-align: -0.15em; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="head">
+    <div>
+      <h1><i data-lucide="flask-conical"></i><span id="tTitle"></span>
+        <a href="/"><i data-lucide="arrow-left"></i><span id="tBack"></span></a></h1>
+      <div class="sub" id="tSub"></div>
+    </div>
+    <button class="langbtn" id="btnLang"><i data-lucide="languages"></i><span id="tLang"></span></button>
+  </div>
+
+  <div class="card">
+    <div class="controls">
+      <div><label id="tDiff"></label><select id="quizMode">
+        <option value="easy" id="tOptEasy"></option>
+        <option value="any" id="tOptAny"></option>
+      </select></div>
+      <button id="btnQuiz"><i data-lucide="dices"></i><span id="tNewQ"></span></button>
+      <span id="score" class="muted"></span>
+    </div>
+  </div>
+
+  <div id="results" class="hidden">
+    <div class="row1">
+      <div class="card"><div id="verdict"></div></div>
+      <div class="card">
+        <div class="muted" id="tCmpTitle"></div>
+        <table id="cmpTable"></table>
+      </div>
+    </div>
+    <div class="row2">
+      <div class="card chartcard">
+        <div class="muted" id="tSeriesTitle"></div>
+        <div class="cv"><canvas id="seriesChart"></canvas></div>
+      </div>
+      <div class="card chartcard">
+        <div class="muted" id="tLagTitle"></div>
+        <div class="cv"><canvas id="lagChart"></canvas></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const STR = {
+  en: {
+    title: "Model Validation — Synthetic Quiz",
+    back: "Back to market analysis",
+    sub: "This page answers one question: <b>did the model actually learn lead-lag estimation, or is it lucky?</b> The generator builds B by shifting A by τ steps, scaling by β and adding noise — so the true answer (τ, ρ) is known by construction, while the model sees only the two curves. This is the only test with absolute ground truth (real markets have none; the classical method is just another estimator). Each click creates a brand-new question the model has never seen.",
+    lang: "中文",
+    diff: "Difficulty",
+    optEasy: "Easy (|ρ| ≥ 0.5, clear signal)",
+    optAny: "Full difficulty (incl. nearly unidentifiable)",
+    newQ: "New question",
+    score: (h, n) => `Session score ${h} / ${n}`,
+    cmpTitle: "Three-way comparison",
+    seriesTitle: "Synthetic pair (generated live; the model sees only these two curves)",
+    lagTitle: "Model lag probabilities (bars) vs classical cross-correlation (gray)",
+    qDiff: "Difficulty", qModel: "Model", qTruth: "Truth",
+    diffTrap: "trap (actually uncorrelated)",
+    diffEasy: r => `easy (|ρ| = ${r})`,
+    diffMed: r => `medium (|ρ| = ${r}, noisy)`,
+    diffHard: r => `hard (|ρ| = ${r}, lag nearly unidentifiable in theory)`,
+    truthUncorr: "independent pair (uncorrelated)",
+    uncorrV: "<b>uncorrelated</b>",
+    leadAB: n => `<b>A leads B by ${n} step${n > 1 ? "s" : ""}</b>`,
+    leadBA: n => `<b>B leads A by ${n} step${n > 1 ? "s" : ""}</b>`,
+    sync: "<b>synchronous (lag = 0)</b>",
+    pos: "positively correlated", neg: "negatively correlated",
+    hitYes: "Model hit (within ±1)",
+    hitNo: "Model missed",
+    bothMiss: "the classical method missed too — intrinsically hard question",
+    baseHitNote: "(classical method hit)",
+    thLag: "lag τ", thRho: "ρ", thNote: "note",
+    rowModel: "LeadLagNet", rowBase: "Classical xcorr", rowTruth: "Ground truth",
+    rowModelNote: "model guess", rowBaseNote: "answered alongside", rowTruthNote: "generator label",
+    dsModel: "model P(τ)", dsBase: "classical xcorr",
+    axProb: "probability", axCorr: "correlation",
+    axTau: "τ (steps; τ>0 = A leads)",
+  },
+  zh: {
+    title: "模型驗證 — 合成測驗",
+    back: "回市場分析",
+    sub: "本頁回答一個問題：<b>模型是真的學會了判斷 lead-lag，還是碰巧？</b>生成器把 A 平移 τ 步、乘上 β、加雜訊製造出 B，因此每題正解（τ、ρ）天生已知；模型只看到兩條曲線。這是唯一有絕對標準答案的測試（真實市場無上帝視角，古典方法也只是另一個估計者）。每按一次，即時生成一題模型從未見過的新題目。",
+    lang: "EN",
+    diff: "難度",
+    optEasy: "簡單題（|ρ| ≥ 0.5，訊號明顯）",
+    optAny: "完整難度（含幾乎不可辨識的題）",
+    newQ: "出題",
+    score: (h, n) => `本輪戰績 ${h} / ${n}`,
+    cmpTitle: "三方對照",
+    seriesTitle: "合成序列對（即時製造；模型只看到這兩條曲線）",
+    lagTitle: "模型 lag 機率分佈（藍柱）vs 古典 cross-correlation（灰線）",
+    qDiff: "題目難度", qModel: "模型判斷", qTruth: "正確答案",
+    diffTrap: "陷阱題（其實不相關）",
+    diffEasy: r => `簡單（|ρ| = ${r}）`,
+    diffMed: r => `中等（|ρ| = ${r}，雜訊偏多）`,
+    diffHard: r => `困難（|ρ| = ${r}，lag 理論上幾乎不可辨識）`,
+    truthUncorr: "獨立序列（不相關）",
+    uncorrV: "兩者<b>不相關</b>",
+    leadAB: n => `<b>A 領先 B ${n} 步</b>`,
+    leadBA: n => `<b>B 領先 A ${n} 步</b>`,
+    sync: "<b>兩者同步（lag = 0）</b>",
+    pos: "正相關", neg: "反相關",
+    hitYes: "模型命中（±1 內）",
+    hitNo: "模型未命中",
+    bothMiss: "古典方法同樣未命中，此題本質困難",
+    baseHitNote: "（古典方法命中）",
+    thLag: "lag τ", thRho: "ρ", thNote: "備註",
+    rowModel: "LeadLagNet", rowBase: "古典 xcorr", rowTruth: "正確答案",
+    rowModelNote: "模型猜測", rowBaseNote: "同場作答", rowTruthNote: "生成器標籤",
+    dsModel: "模型 P(τ)", dsBase: "古典 xcorr",
+    axProb: "機率", axCorr: "相關係數",
+    axTau: "τ（步；τ>0 = A 領先）",
+  },
+};
+let lang = localStorage.getItem("lang") || "en";
+const t = k => STR[lang][k];
+let charts = {};
+let tally = { n: 0, hit: 0 };
+let lastD = null;
+const $ = id => document.getElementById(id);
+const icons = () => lucide.createIcons();
+
+function applyStatic() {
+  document.documentElement.lang = lang === "en" ? "en" : "zh-Hant";
+  document.title = "LeadLagNet — " + t("title");
+  $("tTitle").textContent = t("title");
+  $("tBack").textContent = t("back");
+  $("tSub").innerHTML = t("sub");
+  $("tLang").textContent = t("lang");
+  $("tDiff").textContent = t("diff");
+  $("tOptEasy").textContent = t("optEasy");
+  $("tOptAny").textContent = t("optAny");
+  $("tNewQ").textContent = t("newQ");
+  $("tCmpTitle").textContent = t("cmpTitle");
+  $("tSeriesTitle").textContent = t("seriesTitle");
+  $("tLagTitle").textContent = t("lagTitle");
+  if (tally.n) $("score").innerHTML =
+    `<i data-lucide="target"></i> ` + t("score")(tally.hit, tally.n);
+  icons();
+}
+
+function plainVerdict(tau, rho) {
+  if (Math.abs(rho) < 0.2) return t("uncorrV");
+  const dir = rho > 0 ? t("pos") : t("neg");
+  const lead = tau > 0 ? t("leadAB")(tau) : tau < 0 ? t("leadBA")(-tau) : t("sync");
+  return `${lead}, ${dir} (ρ̂ = ${rho.toFixed(2)})`;
+}
+
+const baseOpts = { animation: false, maintainAspectRatio: false,
+  plugins: { legend: { labels: { boxWidth: 18, font: { size: 11 } } } } };
+
+function drawSeries(a, b) {
+  if (charts.s) charts.s.destroy();
+  charts.s = new Chart($("seriesChart"), {
+    type: "line",
+    data: { labels: [...Array(a.length).keys()],
+      datasets: [
+        { label: "A", data: a, borderColor: "#2563eb", borderWidth: 1.2, pointRadius: 0 },
+        { label: "B", data: b, borderColor: "#f59e0b", borderWidth: 1.2, pointRadius: 0 }]},
+    options: { ...baseOpts, scales: { x: { ticks: { maxTicksLimit: 8, font: { size: 10 } } },
+                                      y: { ticks: { font: { size: 10 } } } } }
+  });
+}
+
+function drawLag(lags, probs, curve, tauModel) {
+  if (charts.l) charts.l.destroy();
+  charts.l = new Chart($("lagChart"), {
+    data: { labels: lags,
+      datasets: [
+        { type: "bar", label: t("dsModel"), data: probs, backgroundColor:
+            lags.map(x => x === tauModel ? "#2563eb" : "#93c5fd"), yAxisID: "y" },
+        { type: "line", label: t("dsBase"), data: curve, borderColor: "#6b7280",
+          borderWidth: 1.4, pointRadius: 2, yAxisID: "y2" }]},
+    options: { ...baseOpts, scales: {
+        y: { title: { display: true, text: t("axProb"), font: { size: 10 } },
+             min: 0, ticks: { font: { size: 10 } } },
+        y2: { position: "right", title: { display: true, text: t("axCorr"), font: { size: 10 } },
+              grid: { drawOnChartArea: false }, ticks: { font: { size: 10 } } },
+        x: { title: { display: true, text: t("axTau"), font: { size: 10 } },
+             ticks: { font: { size: 10 } } } } }
+  });
+}
+
+function render() {
+  if (!lastD) return;
+  const d = lastD, truth = d.truth;
+  $("results").classList.remove("hidden");
+  const truthTxt = truth.correlated
+    ? `τ = ${truth.tau >= 0 ? "+" : ""}${truth.tau}, ρ = ${truth.rho.toFixed(2)}`
+    : t("truthUncorr");
+  const absR = Math.abs(truth.rho).toFixed(2);
+  const difficulty = !truth.correlated ? t("diffTrap")
+    : Math.abs(truth.rho) >= 0.5 ? t("diffEasy")(absR)
+    : Math.abs(truth.rho) >= 0.2 ? t("diffMed")(absR)
+    : t("diffHard")(absR);
+  const modelHit = truth.correlated
+    ? Math.abs(d.model.tau - truth.tau) <= 1 : Math.abs(d.model.rho) < 0.2;
+  const baseHit = truth.correlated
+    ? Math.abs(d.baseline.tau - truth.tau) <= 1 : Math.abs(d.baseline.rho) < 0.2;
+  let hit = modelHit
+    ? `<span class="ok"><i data-lucide="circle-check"></i> ${t("hitYes")}</span>`
+    : `<span class="bad"><i data-lucide="circle-x"></i> ${t("hitNo")}</span>`;
+  if (!modelHit && !baseHit) hit += ` <span class="muted">${t("bothMiss")}</span>`;
+  else if (!modelHit && baseHit) hit += ` <span class="muted">${t("baseHitNote")}</span>`;
+  $("score").innerHTML = `<i data-lucide="target"></i> ` + t("score")(tally.hit, tally.n);
+  $("verdict").innerHTML =
+    `<span class="muted">${t("qDiff")}: ${difficulty}</span><br>` +
+    `${t("qModel")}: ${plainVerdict(d.model.tau, d.model.rho)}<br>` +
+    `${t("qTruth")}: ${truthTxt}<br>${hit}`;
+  drawSeries(d.series_a, d.series_b);
+  drawLag(d.lags, d.model.lag_probs, d.baseline.curve, d.model.tau);
+  $("cmpTable").innerHTML =
+    `<tr><th></th><th>${t("thLag")}</th><th>${t("thRho")}</th><th>${t("thNote")}</th></tr>` + [
+    [t("rowModel"), (d.model.tau >= 0 ? "+" : "") + d.model.tau, d.model.rho.toFixed(3), t("rowModelNote")],
+    [t("rowBase"), (d.baseline.tau >= 0 ? "+" : "") + d.baseline.tau, d.baseline.rho.toFixed(3), t("rowBaseNote")],
+    [t("rowTruth"), truth.correlated ? (truth.tau >= 0 ? "+" : "") + truth.tau : "—",
+     truth.rho.toFixed(3), t("rowTruthNote")],
+  ].map(r => `<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td></tr>`).join("");
+  icons();
+}
+
+$("btnLang").onclick = () => {
+  lang = lang === "en" ? "zh" : "en";
+  localStorage.setItem("lang", lang);
+  applyStatic();
+  render();
+};
+
+$("btnQuiz").onclick = async () => {
+  const d = await (await fetch("/api/quiz", { method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ difficulty: $("quizMode").value }) })).json();
+  const truth = d.truth;
+  const modelHit = truth.correlated
+    ? Math.abs(d.model.tau - truth.tau) <= 1 : Math.abs(d.model.rho) < 0.2;
+  tally.n += 1; tally.hit += modelHit;
+  lastD = d;
+  render();
+};
+
+applyStatic();
+</script>
+</body>
+</html>

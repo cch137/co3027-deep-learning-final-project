@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>LeadLagNet — Cross-Market Lead-Lag Detection</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>
+  :root { --blue: #2563eb; --gray: #6b7280; --bg: #f8fafc; --line: #e5e7eb; }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body { font-family: "Segoe UI", "Microsoft JhengHei", sans-serif; margin: 0;
+         background: var(--bg); color: #111827; font-size: 14px; }
+  .wrap { max-width: 1280px; margin: 0 auto; height: 100vh; padding: 10px 16px;
+          display: flex; flex-direction: column; gap: 10px; }
+  .head { display: flex; align-items: flex-start; gap: 10px; }
+  .head > div { flex: 1; }
+  h1 { font-size: 1.12rem; margin: 0; display: flex; align-items: center; gap: 8px; }
+  h1 svg { color: var(--blue); }
+  .sub { color: var(--gray); font-size: 0.8rem; display: flex; align-items: center;
+         gap: 6px; flex-wrap: wrap; }
+  .sub a { color: var(--blue); text-decoration: none; display: inline-flex;
+           align-items: center; gap: 3px; margin-left: auto; }
+  .card { background: #fff; border: 1px solid var(--line); border-radius: 10px;
+          padding: 10px 14px; }
+  .controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: end; }
+  label { display: block; font-size: 0.72rem; color: var(--gray); margin-bottom: 3px; }
+  select, input { padding: 6px 9px; border: 1px solid #d1d5db; border-radius: 7px;
+                  font-size: 0.86rem; background: #fff; }
+  button { padding: 7px 18px; border: 0; border-radius: 7px; background: var(--blue);
+           color: #fff; font-size: 0.86rem; cursor: pointer; display: inline-flex;
+           align-items: center; gap: 6px; }
+  button:hover { opacity: 0.9; }
+  .langbtn { background: #fff; color: var(--gray); border: 1px solid #d1d5db;
+             padding: 5px 12px; font-size: 0.8rem; }
+  #results { display: flex; flex-direction: column; gap: 10px; flex: 1; min-height: 0; }
+  .row1 { display: grid; grid-template-columns: 1.25fr 1fr; gap: 10px; }
+  .row2 { display: grid; grid-template-columns: 1.25fr 1fr; gap: 10px; flex: 1; min-height: 0; }
+  .chartcard { display: flex; flex-direction: column; min-height: 0; }
+  .cv { flex: 1; position: relative; min-height: 0; }
+  #verdict { font-size: 0.95rem; line-height: 1.65; }
+  #verdict .big { font-size: 1.18rem; font-weight: 700; color: var(--blue); }
+  .muted { color: var(--gray); font-size: 0.76rem; margin-bottom: 4px; }
+  table { border-collapse: collapse; font-size: 0.85rem; width: 100%; }
+  td, th { border: 1px solid var(--line); padding: 4px 8px; text-align: center; }
+  .hidden { display: none !important; }
+  .err { color: #dc2626; font-size: 0.85rem; }
+  svg.lucide { width: 1.05em; height: 1.05em; vertical-align: -0.15em; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="head">
+    <div>
+      <h1><i data-lucide="git-compare-arrows"></i><span id="tTitle"></span></h1>
+      <div class="sub">
+        <span id="tSub"></span>
+        <a href="/quiz"><i data-lucide="flask-conical"></i><span id="tQuizLink"></span></a>
+      </div>
+    </div>
+    <button class="langbtn" id="btnLang"><i data-lucide="languages"></i><span id="tLang"></span></button>
+  </div>
+
+  <div class="card">
+    <div class="controls">
+      <div><label id="tAssetA"></label><select id="tickerA"></select></div>
+      <div><label id="tAssetB"></label><select id="tickerB"></select></div>
+      <div><label id="tEndDate"></label><input type="date" id="endDate"></div>
+      <button id="btnAnalyze"><i data-lucide="search"></i><span id="tAnalyze"></span></button>
+      <span id="error" class="err"></span>
+    </div>
+  </div>
+
+  <div id="results" class="hidden">
+    <div class="row1">
+      <div class="card"><div id="verdict"></div></div>
+      <div class="card">
+        <div class="muted" id="tCmpTitle"></div>
+        <table id="cmpTable"></table>
+      </div>
+    </div>
+    <div class="row2">
+      <div class="card chartcard">
+        <div class="muted" id="tSeriesTitle"></div>
+        <div class="cv"><canvas id="seriesChart"></canvas></div>
+      </div>
+      <div class="card chartcard">
+        <div class="muted" id="tLagTitle"></div>
+        <div class="cv"><canvas id="lagChart"></canvas></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const STR = {
+  en: {
+    title: "LeadLagNet — Cross-Market Lead-Lag Detection",
+    sub: "The model sees only two 128-trading-day return windows and judges in one forward pass (~2 ms): who leads whom, by how many days, and how strongly. Gray line: classical cross-correlation reference.",
+    quizLink: "Model validation (synthetic quiz)",
+    lang: "中文",
+    assetA: "Asset A", assetB: "Asset B", endDate: "Window end date", analyze: "Analyze",
+    cmpTitle: "Side-by-side numbers",
+    seriesTitle: "Both return series (z-scored — the model's actual input)",
+    lagTitle: "Model lag probabilities (bars) vs classical cross-correlation (gray)",
+    windowInfo: (a, b, s, e) => `A = ${a}, B = ${b}, window ${s} – ${e}`,
+    uncorr: "The two series are <b>uncorrelated</b>",
+    uncorrNote: r => `|ρ̂| = ${r} < 0.2`,
+    leadAB: n => `<span class="big">A leads B by ${n} day${n > 1 ? "s" : ""}</span>`,
+    leadBA: n => `<span class="big">B leads A by ${n} day${n > 1 ? "s" : ""}</span>`,
+    sync: `<span class="big">Synchronous (lag = 0)</span>`,
+    pos: "positively correlated", neg: "negatively correlated",
+    betaLine: b => `Scale β̂ = ${b} (coefficient of B ≈ β·A)`,
+    thLag: "lag τ", thRho: "ρ", thNote: "note",
+    rowModel: "LeadLagNet", rowBase: "Classical xcorr",
+    rowModelNote: "one forward pass", rowBaseNote: "scans 21 lags",
+    dsModel: "model P(τ)", dsBase: "classical xcorr",
+    axProb: "probability", axCorr: "correlation",
+    axTau: "τ (trading days; τ>0 = A leads)",
+  },
+  zh: {
+    title: "LeadLagNet — 跨市場 Lead-Lag 關係偵測",
+    sub: "模型只看兩段 128 個交易日的報酬序列，一次前向傳播（約 2 ms）判斷：誰領先誰、領先幾天、相關多強；灰線為古典 cross-correlation 對照。",
+    quizLink: "模型驗證頁（合成測驗）",
+    lang: "EN",
+    assetA: "資產 A", assetB: "資產 B", endDate: "窗口結束日", analyze: "分析",
+    cmpTitle: "數值對照",
+    seriesTitle: "兩條報酬序列（z-score 後，即模型實際輸入）",
+    lagTitle: "模型 lag 機率分佈（藍柱）vs 古典 cross-correlation（灰線）",
+    windowInfo: (a, b, s, e) => `A = ${a}，B = ${b}，窗口 ${s} ~ ${e}`,
+    uncorr: "兩者<b>不相關</b>",
+    uncorrNote: r => `|ρ̂| = ${r} < 0.2`,
+    leadAB: n => `<span class="big">A 領先 B ${n} 天</span>`,
+    leadBA: n => `<span class="big">B 領先 A ${n} 天</span>`,
+    sync: `<span class="big">兩者同步（lag = 0）</span>`,
+    pos: "正相關", neg: "反相關",
+    betaLine: b => `倍數 β̂ = ${b}（B ≈ β·A 的尺度係數）`,
+    thLag: "lag τ", thRho: "ρ", thNote: "備註",
+    rowModel: "LeadLagNet", rowBase: "古典 xcorr",
+    rowModelNote: "一次前向傳播", rowBaseNote: "掃描 21 個 lag",
+    dsModel: "模型 P(τ)", dsBase: "古典 xcorr",
+    axProb: "機率", axCorr: "相關係數",
+    axTau: "τ（交易日；τ>0 = A 領先）",
+  },
+};
+let lang = localStorage.getItem("lang") || "en";
+const t = k => STR[lang][k];
+let charts = {};
+let lastD = null, lastBody = null;
+const $ = id => document.getElementById(id);
+const icons = () => lucide.createIcons();
+
+function applyStatic() {
+  document.documentElement.lang = lang === "en" ? "en" : "zh-Hant";
+  document.title = t("title");
+  for (const k of ["Title", "Sub", "QuizLink", "Lang", "AssetA", "AssetB",
+                   "EndDate", "Analyze", "CmpTitle", "SeriesTitle", "LagTitle"]) {
+    $("t" + k).textContent = t(k[0].toLowerCase() + k.slice(1));
+  }
+  icons();
+}
+
+function plainVerdict(tau, rho) {
+  if (Math.abs(rho) < 0.2)
+    return [t("uncorr"), t("uncorrNote")(Math.abs(rho).toFixed(2))];
+  const dir = rho > 0 ? t("pos") : t("neg");
+  const lead = tau > 0 ? t("leadAB")(tau) : tau < 0 ? t("leadBA")(-tau) : t("sync");
+  return [`${lead}, ${dir} (ρ̂ = ${rho.toFixed(2)})`, ""];
+}
+
+const baseOpts = { animation: false, maintainAspectRatio: false,
+  plugins: { legend: { labels: { boxWidth: 18, font: { size: 11 } } } } };
+
+function drawSeries(labels, a, b, nameA, nameB) {
+  if (charts.s) charts.s.destroy();
+  charts.s = new Chart($("seriesChart"), {
+    type: "line",
+    data: { labels,
+      datasets: [
+        { label: nameA, data: a, borderColor: "#2563eb", borderWidth: 1.2, pointRadius: 0 },
+        { label: nameB, data: b, borderColor: "#f59e0b", borderWidth: 1.2, pointRadius: 0 }]},
+    options: { ...baseOpts, scales: { x: { ticks: { maxTicksLimit: 8, font: { size: 10 } } },
+                                      y: { ticks: { font: { size: 10 } } } } }
+  });
+}
+
+function drawLag(lags, probs, curve, tauModel) {
+  if (charts.l) charts.l.destroy();
+  charts.l = new Chart($("lagChart"), {
+    data: { labels: lags,
+      datasets: [
+        { type: "bar", label: t("dsModel"), data: probs, backgroundColor:
+            lags.map(x => x === tauModel ? "#2563eb" : "#93c5fd"), yAxisID: "y" },
+        ...(curve ? [{ type: "line", label: t("dsBase"), data: curve,
+            borderColor: "#6b7280", borderWidth: 1.4, pointRadius: 2, yAxisID: "y2" }] : [])]},
+    options: { ...baseOpts, scales: {
+        y: { title: { display: true, text: t("axProb"), font: { size: 10 } },
+             min: 0, ticks: { font: { size: 10 } } },
+        y2: { position: "right", title: { display: true, text: t("axCorr"), font: { size: 10 } },
+              grid: { drawOnChartArea: false }, ticks: { font: { size: 10 } } },
+        x: { title: { display: true, text: t("axTau"), font: { size: 10 } },
+             ticks: { font: { size: 10 } } } } }
+  });
+}
+
+function render() {
+  if (!lastD) return;
+  const d = lastD, body = lastBody;
+  $("results").classList.remove("hidden");
+  const [v, note] = plainVerdict(d.model.tau, d.model.rho);
+  $("verdict").innerHTML =
+    `<span class="muted">${t("windowInfo")(body.ticker_a, body.ticker_b, d.window.start, d.window.end)}</span><br>` +
+    `${v}${note ? ` <span class="muted">(${note})</span>` : ""}<br>` +
+    `<span class="muted">${t("betaLine")(d.model.beta)}</span>`;
+  drawSeries(d.window.dates, d.window.series_a, d.window.series_b,
+             body.ticker_a, body.ticker_b);
+  drawLag(d.lags, d.model.lag_probs, d.baseline.curve, d.model.tau);
+  $("cmpTable").innerHTML =
+    `<tr><th></th><th>${t("thLag")}</th><th>${t("thRho")}</th><th>${t("thNote")}</th></tr>` + [
+    [t("rowModel"), (d.model.tau >= 0 ? "+" : "") + d.model.tau, d.model.rho.toFixed(3), t("rowModelNote")],
+    [t("rowBase"), (d.baseline.tau >= 0 ? "+" : "") + d.baseline.tau, d.baseline.rho.toFixed(3), t("rowBaseNote")],
+  ].map(r => `<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td></tr>`).join("");
+  icons();
+}
+
+async function init() {
+  applyStatic();
+  const meta = await (await fetch("/api/assets")).json();
+  for (const sel of [$("tickerA"), $("tickerB")]) {
+    sel.innerHTML = meta.tickers.map(x =>
+      `<option value="${x.symbol}">${x.symbol} — ${x.name}</option>`).join("");
+  }
+  $("tickerA").value = "^GSPC";
+  $("tickerB").value = "^TWII";
+  $("endDate").value = meta.max_date;
+  $("endDate").min = meta.min_date;
+  $("endDate").max = meta.max_date;
+}
+
+$("btnLang").onclick = () => {
+  lang = lang === "en" ? "zh" : "en";
+  localStorage.setItem("lang", lang);
+  applyStatic();
+  render();
+};
+
+$("btnAnalyze").onclick = async () => {
+  $("error").textContent = "";
+  const body = { ticker_a: $("tickerA").value, ticker_b: $("tickerB").value,
+                 end_date: $("endDate").value };
+  const r = await fetch("/api/analyze", { method: "POST",
+      headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  if (!r.ok) { $("error").textContent = (await r.json()).detail; return; }
+  lastD = await r.json();
+  lastBody = body;
+  render();
+};
+
+init();
+</script>
+</body>
+</html>
