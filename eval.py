@@ -44,12 +44,14 @@ def direction3(rho: np.ndarray) -> np.ndarray:
 def model_predict(model: LeadLagNet, a: np.ndarray, b: np.ndarray) -> dict:
     """a, b: (N, L) already z-scored. Returns tau (N,), rho (N,)."""
     x = torch.from_numpy(np.stack([a, b], axis=1).astype(np.float32))
-    out_tau, out_rho = [], []
+    out_tau, out_rho, out_probs = [], [], []
     for i in range(0, len(x), 1024):
         logits, rho = model(x[i : i + 1024])
         out_tau.append(logits.argmax(dim=1).numpy() - config.MAX_LAG)
         out_rho.append(rho.numpy())
-    return {"tau": np.concatenate(out_tau), "rho": np.concatenate(out_rho)}
+        out_probs.append(torch.softmax(logits, dim=1).numpy())
+    return {"tau": np.concatenate(out_tau), "rho": np.concatenate(out_rho),
+            "probs": np.concatenate(out_probs)}
 
 
 def eval_synthetic(model: LeadLagNet) -> None:

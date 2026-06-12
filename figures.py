@@ -166,9 +166,10 @@ def fig_model_vs_baseline(s: dict) -> None:
         vals = [src[k] for k in keys]
         bars = ax.bar(xpos + (off - 0.5) * 0.36, vals, 0.36, label=label, color=color)
         ax.bar_label(bars, fmt="%.3f", fontsize=9)
-    ax.set_xticks(xpos, names); ax.set_ylim(0, 1.1)
+    ax.set_xticks(xpos, names); ax.set_ylim(0, 1.32)
+    ax.set_yticks(np.arange(0, 1.01, 0.2))
     ax.set_title("Synthetic test set (n = 20,000): accuracy")
-    ax.legend()
+    ax.legend(loc="upper center", ncol=2, frameon=False)
     ax = axes[1]
     bars = ax.bar(["LeadLagNet", "baseline"],
                   [s["model"]["rho_mae"], s["baseline"]["rho_mae"]],
@@ -224,14 +225,22 @@ def fig_case_studies(model, ret: pd.DataFrame) -> list[dict]:
         bp = xcorr_scan_batch(A, B, config.MAX_LAG)
         mode_tau = int(pd.Series(mp["tau"]).mode().iloc[0])
         mean_curve = np.nanmean(bp["curves"], axis=0)
-        ax.plot(taus, mean_curve, "o-", color="tab:gray", label="xcorr (baseline)")
-        ax.axvline(mode_tau, color="tab:blue", lw=2, ls="--",
-                   label=f"model: τ = {mode_tau:+d}, ρ = {mp['rho'].mean():+.2f}")
-        ax.axvline(0, color="black", lw=0.6)
+        mean_probs = mp["probs"].mean(axis=0)
+        bar_colors = ["#2563eb" if t == mode_tau else "#93c5fd" for t in taus]
+        ax.bar(taus, mean_probs, color=bar_colors,
+               label=f"model P(τ) — mode τ = {mode_tau:+d}, ρ̂ = {mp['rho'].mean():+.2f}")
+        ax.set_ylabel("model probability")
+        ax2 = ax.twinx()
+        ax2.plot(taus, mean_curve, "o-", color="tab:gray", lw=1.4, ms=3,
+                 label="xcorr (baseline)")
+        ax2.set_ylabel("correlation", color="tab:gray")
+        ax2.grid(False)
         ax.set_xticks(taus[::2])
         ax.set_title(desc, fontsize=10)
-        ax.set_xlabel("τ (days)"); ax.set_ylabel("correlation")
-        ax.legend(fontsize=8.5)
+        ax.set_xlabel("τ (days)")
+        h1, l1 = ax.get_legend_handles_labels()
+        h2, l2 = ax2.get_legend_handles_labels()
+        ax.legend(h1 + h2, l1 + l2, fontsize=8)
         rows.append({"pair": desc, "model_tau": mode_tau,
                      "model_rho": float(mp["rho"].mean()),
                      "base_tau": int(pd.Series(bp["tau"]).mode().iloc[0]),
